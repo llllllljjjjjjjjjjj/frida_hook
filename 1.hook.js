@@ -2,7 +2,7 @@
 function hook1() {
     //apk原码中对应的函数所在文件路径
     var utils = Java.use("com.luoge.com.Utils")
-    
+
     //执行后还可以改变代码，重新触发执行
     utils.getCalc.implementation = function (a, b) {
         var result = this.getCalc(a, b);
@@ -15,8 +15,8 @@ function hook1() {
 function hook2() {
     //apk原码中对应的函数所在文件路径
     var utils = Java.use("com.luoge.com.Utils")
-    
-    utils.getOver.overload().implementation = function() {
+
+    utils.getOver.overload().implementation = function () {
         let res = this.getOver();
         console.log(`getOver(): `, res);
         return "hook success";
@@ -26,9 +26,9 @@ function hook2() {
 function hook3() {
     //apk原码中对应的函数所在文件路径
     var utils = Java.use("com.luoge.com.Utils")
-    
-    for(var i = 0; i < utils.getOver.overloads.length; i++) {
-        utils.getOver.overloads[i].implementation = function() {
+
+    for (var i = 0; i < utils.getOver.overloads.length; i++) {
+        utils.getOver.overloads[i].implementation = function () {
             let res = this.getOver.apply(this, arguments);
             console.log(`getOver(${arguments}): `, res);
             return res;
@@ -77,19 +77,44 @@ function hook6() {
 //7.hook内部类-需要在类和内部类之间加$符号
 function hook7() {
     //apk原码中对应的函数所在文件路径
-    var InnerClass = Java.use("com.luoge.com.Money$innerClass");    
-InnerClass.$init.overload('java.lang.String', 'int').implementation = function (name, num) {
-    name = 'xxxxxx'    
-    console.log('Hooked innerClass constructor: ');
+    var InnerClass = Java.use("com.luoge.com.Money$innerClass");
+    InnerClass.$init.overload('java.lang.String', 'int').implementation = function (name, num) {
+        name = 'xxxxxx'
+        console.log('Hooked innerClass constructor: ');
         console.log('Parameter name:', name)
         console.log('Parameter num:', num)
         this.$init(name, num)
         console.log(this.outPrint())
-        return this.$init(name,num)
+        return this.$init(name, num)
     }
 }
 
-//8.
+//8.探测结构
+function hook8() {
+    //枚举加载类的所有方法
+    console.log(Java.enumerateLoadedClassesSync().join('\n'));
+    var cls = Java.use("com.luoge.com.Money").class;
+    // 获取类的全限定名
+    console.log(cls.getName());
+    // 获取所有构造方法
+    var constructors = cls.getDeclaredConstructors();
+    for (var i = 0; i < constructors.length; i++) {
+        console.log("构造函数 " + i + ": " + constructors[i]);
+    }
+    //获取所有字段（属性）
+    var fields = cls.getDeclaredFields();
+    for (var i = 0; i < fields.length; i++) {
+        var f = fields[i];
+        console.log("字段: " + f.getName() + "，类型: " + f.getType().getName());
+    }
+    //获取所有内部类
+    var innerClasses = cls.getDeclaredClasses();
+    for (var i = 0; i < innerClasses.length; i++) {
+        console.log("内部类: " + innerClasses[i].getName());
+    }
+
+
+}
 
 
 
@@ -99,8 +124,8 @@ InnerClass.$init.overload('java.lang.String', 'int').implementation = function (
 
 
 function main() {
-    Java.perform(function(){
-        hook7()
+    Java.perform(function () {
+        hook8()
     })
-}    
+}
 main()
