@@ -116,6 +116,90 @@ function hook8() {
 
 }
 
+//9.hook-map类型1
+function hook9() {
+    var BufferMap = Java.use("com.luoge.com.BufferMap");
+    BufferMap['show'].implementation = function (map) {
+        console.log(`BufferMap.shel is called: map=${map}`);
+        let result = this['show'](map);
+        console.log(`BufferMap.shew result=${result}`);
+        return result;
+    };
+}
+//10.hook-map类型2
+function hook10() {
+    var BufferMap = Java.use("com.luoge.com.BufferMap");
+    BufferMap['show'].implementation = function (map) {
+        var key = map.keySet();
+        var it = key.iterator()
+        var result = ""
+        while(it.hasNext()){
+            var keystr = it.next();
+            var valuestr = map.get(keystr)
+            result += valuestr;
+        }
+        console.log(`BufferMap.show is called: map=${map}`)
+        var results = this['show'](map)
+        console.log(`BufferMap.show result=${results}`)
+        return results;
+    };
+}
+//11.hook-map类型3
+function hook11() {
+    var hash = Java.use("java.util.HashMap")
+    hash.put.implementation = function (key, value) {
+        console.log("key -> ", key);
+        console.log("value ->", value)
+        var res = this.put(key, value)
+        if(key.toString() === "user") {
+            console.log("查看堆栈")
+            Java.perform(function() {
+                console.log(Java.use('android.util.Log').getStackTraceString(Java.use("java.lang.Exception").$new()))
+            })
+        }
+        return res;
+    }
+}
+
+//12.hook URL--由发送请求的方法决定
+//使用 OkHttp3 Request.Builder.url(HttpUrl) 构造请求地址时会被捕获
+function hook12() {
+    var Builder = Java.use('okhttp3.Request$Builder');
+    Builder.url.overload('okhttp3.HttpUrl').implementation = function(a) {
+        console.log("url", a);
+        var res = this.url(a)
+        return res
+    }
+}
+
+//13.hook-headers
+//如果在日志中看到了加密参数，在周围打印堆栈日志即可
+//使用Request.Builder.addHeader("Authorization", xxx) 添加请求头，就能捕获
+function hook13() {
+    var Builder = Java.use('okhttp3.Request$Builder');
+    Builder["addHeader"].implementation = function (str1, str2) {
+        console.log("key:" + str1)
+        console.log("val:" + str2)
+        if(str1.toString() === "Authorization") {
+            console.log("查看堆栈")
+            Java.perform(function() {
+                console.log(Java.use('android.util.Log').getStackTraceString(Java.use("java.lang.Exception").$new()))
+            })
+        }
+       
+        var result = this['addHeader'](str1, str2);
+        return result
+    }
+}
+//14.
+function hook14() {
+    var OkHttpClient = Java.use("okhttp3.OkHttpClient");
+    OkHttpClient.newCall.overload('okhttp3.Request').implementation = function() {
+        console.log("HTTP Request ->", request.url().toString());
+        var call = this.newC
+    }
+}
+
 
 
 
@@ -125,7 +209,11 @@ function hook8() {
 
 function main() {
     Java.perform(function () {
-        hook8()
+        //q
+        // 
+        // hook12()
+        hook13()
     })
 }
 main()
+// frida -UF -l 1.hook.js
